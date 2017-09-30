@@ -64,8 +64,8 @@ class Agent():
     def __init__(self, game_class, epsilon=0.1, alpha = 0.5, value_player='X'):
         self.V = dict()
         self.NewGame = game_class
-        self.epsilon = 0.1
-        self.alpha = 0.5
+        self.epsilon = epsilon
+        self.alpha = alpha
         self.value_player = value_player
 
     def state_value(self, game_state):
@@ -167,7 +167,7 @@ def demo_game_stats(agent):
     print("    percentage results: {}".format(game_stats))
 
 if __name__ == '__main__':
-    agent = Agent(TicTacToeGame)
+    agent = Agent(TicTacToeGame, epsilon = 0.15, alpha = 1.0)
     print("Before learning:")
     demo_game_stats(agent)
 
@@ -175,7 +175,11 @@ if __name__ == '__main__':
     print("After 1000 learning games:")
     demo_game_stats(agent)
 
-    agent.learn_game(9000)
+    agent.learn_game(4000)
+    print("After 5000 learning games:")
+    demo_game_stats(agent)
+
+    agent.learn_game(5000)
     print("After 10000 learning games:")
     demo_game_stats(agent)
 
