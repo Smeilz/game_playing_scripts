@@ -153,6 +153,29 @@ class Agent():
                 print("\nIt's a draw!")
             return '-'
 
+    def interactive_game(self, agent_player='X'):
+        game = self.NewGame()
+        t = 0
+        while game.playable():
+            print(" \nTurn {}\n".format(t))
+            game.print_board()
+            if game.player == agent_player:
+                move = self.play_select_move(game)
+                game.make_move(move)
+            else:
+                move = self.__request_human_move(game)
+                game.make_move(move)
+            t += 1
+
+        print(" \nTurn {}\n".format(t))
+        game.print_board()
+
+        if game.winner:
+            print("\n{} is the winner!".format(game.winner))
+            return game.winner
+        print("\nIt's a draw!")
+        return '-'
+
     def __state_values(self, game_states):
         return dict((state, self.state_value(state)) for state in game_states)
 
@@ -176,6 +199,15 @@ class Agent():
             return -1.0
         else:
             return 0.0
+
+    def __request_human_move(self, game):
+        allowed_moves = [i+1 for i in range(9) if game.state[i] == ' ']
+        human_move = None
+        while not human_move:
+            idx = int(input('Choose move for {}, from {} : '.format(game.player, allowed_moves)))
+            if any([i==idx for i in allowed_moves]):
+                human_move = game.state[:idx-1] + game.player + game.state[idx:]
+        return human_move
 
 def demo_game_stats(agent):
     results = [agent.demo_game() for i in range(10000)]
