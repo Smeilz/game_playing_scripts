@@ -7,3 +7,19 @@ through exploratory self-play, with reward +1 for a win, and -1 for a loss.
 
 It takes a little over 30,000 example games before the agent learns how to play optimally, resulting in
 draws in all self-play.
+
+## games.py
+
+Contains the following game definitions:
+
+  * TicTacToe
+
+## gameagent.py
+
+Contains the following agent definitions:
+
+  * QAfterstateAgent - basic Q-learner
+
+
+
+
