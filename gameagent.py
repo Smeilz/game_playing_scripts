@@ -15,6 +15,11 @@
 '''
 
 import numpy as np
+import tensorflow as tf
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+from keras.optimizers import SGD
+from keras.regularizers import l2
 import csv
 import random
 from itertools import groupby

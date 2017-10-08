@@ -20,5 +20,5 @@ Contains the following agent definitions:
 
   * QAfterstateAgent - basic Q-learner
 
-  * QLambdaAfterstateAgent - uses eligibility traces (not sure if correct/stable yet!)
+  * QLambdaAfterstateAgent - uses eligibility traces, use alpha=0.5, lam=0.5 for TicTacToe in 1000 games
 
