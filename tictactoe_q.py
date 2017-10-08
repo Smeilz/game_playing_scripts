@@ -15,6 +15,7 @@
 '''
 
 import numpy as np
+import csv
 import random
 from itertools import groupby
 
@@ -26,6 +27,8 @@ class TicTacToeGame():
 
     def allowed_moves(self):
         states = []
+        if self.winner:
+            return states
         for i in range(len(self.state)):
             if self.state[i] == ' ':
                 states.append(self.state[:i] + self.player + self.state[i+1:])
@@ -77,7 +80,7 @@ class TicTacToeGame():
 
 
 class Agent():
-    def __init__(self, game_class, epsilon=0.1, alpha=0.5, value_player='X'):
+    def __init__(self, game_class, epsilon=0.1, alpha=1.0, value_player='X'):
         self.V = dict()
         self.NewGame = game_class
         self.epsilon = epsilon
@@ -93,23 +96,21 @@ class Agent():
 
     def learn_from_episode(self):
         game = self.NewGame()
-        _, move = self.learn_select_move(game)
-        while move:
-            move = self.learn_from_move(game, move)
+        while game.playable():
+            self.learn_from_move(game)
+        self.V[game.state] = self.__reward(game)
 
-    def learn_from_move(self, game, move):
-        game.make_move(move)
+    def learn_from_move(self, game):
+        current_state = game.state
+        best_next_move, selected_next_move = self.learn_select_move(game)
         r = self.__reward(game)
-        td_target = r
-        next_state_value = 0.0
-        selected_next_move = None
-        if game.playable():
-            best_next_move, selected_next_move = self.learn_select_move(game)
-            next_state_value = self.state_value(best_next_move)
-        current_state_value = self.state_value(move)
-        td_target = r + next_state_value
-        self.V[move] = current_state_value + self.alpha * (td_target - current_state_value)
-        return selected_next_move
+
+        current_state_value = self.state_value(current_state)
+        best_move_value = self.state_value(best_next_move)
+        td_target = r + best_move_value
+        self.V[current_state] = current_state_value + self.alpha * (td_target - current_state_value)
+
+        game.make_move(selected_next_move)
 
     def learn_select_move(self, game):
         allowed_state_values = self.__state_values( game.allowed_moves() )
@@ -176,6 +177,20 @@ class Agent():
         print("\nIt's a draw!")
         return '-'
 
+    def round_V(self):
+        # After training, this makes action selection random from equally-good choices
+        for k in self.V.keys():
+            self.V[k] = round(self.V[k],1)
+
+    def save_v_table(self):
+        with open('state_values.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['State', 'Value'])
+            all_states = list(self.V.keys())
+            all_states.sort()
+            for state in all_states:
+                writer.writerow([state, self.V[state]])
+
     def __state_values(self, game_states):
         return dict((state, self.state_value(state)) for state in game_states)
 
@@ -210,8 +225,8 @@ class Agent():
         return human_move
 
 def demo_game_stats(agent):
-    results = [agent.demo_game() for i in range(10000)]
-    game_stats = {k: results.count(k)/100 for k in ['X', 'O', '-']}
+    results = [agent.demo_game() for i in range(100000)]
+    game_stats = {k: results.count(k)/1000 for k in ['X', 'O', '-']}
     print("    percentage results: {}".format(game_stats))
 
 if __name__ == '__main__':
@@ -238,3 +253,10 @@ if __name__ == '__main__':
     agent.learn_game(10000)
     print("After 30000 learning games:")
     demo_game_stats(agent)
+
+    agent.learn_game(10000)
+    print("After 40000 learning games:")
+    demo_game_stats(agent)
+
+    # agent.round_V()
+    agent.save_v_table()
