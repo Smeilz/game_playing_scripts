@@ -20,6 +20,5 @@ Contains the following agent definitions:
 
   * QAfterstateAgent - basic Q-learner
 
-
-
+  * QLambdaAfterstateAgent - uses eligibility traces (not sure if correct/stable yet!)
 

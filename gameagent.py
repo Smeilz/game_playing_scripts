@@ -171,3 +171,76 @@ class QAfterstateAgent(AfterStateBase):
 
         return (best_move, selected_move)
 
+
+class QLambdaAfterstateAgent(AfterStateBase):
+    '''
+    QLambdaAfterstateAgent can in theory learn any zero-sum 2 player game where the only reward is +1 for
+    a win, 0 for a draw and -1 for a loss. In practice it will be too slow for complex games.
+
+    The game_class parameter must have the following behaviour:
+
+      * No constructor params, the game should initialise ready to start play
+
+      * state property, which should be suitable for use as a dict key
+
+      * player property, which should have two possible values
+
+      * winner property, which should be none, or have same two possible values as player
+
+      * playable() method returning True when play may continue
+
+      * allowed_moves() method which returns list of valid next moves
+
+      * make_move(new_state) method which checks and applies requested move
+
+      * request_human_move() method which allows human to make move for current player
+
+      * display() method which shows current game state
+    '''
+    def __init__(self, game_class, epsilon=0.1, alpha=1.0, value_player='X', lam=0.5):
+        super(QLambdaAfterstateAgent, self).__init__(game_class, epsilon, alpha, value_player)
+        self.lam = lam
+
+    def learn_from_episode(self):
+        game = self.NewGame()
+        self.E = dict()
+        while game.playable():
+            self.learn_from_move(game)
+        if not (game.state in self.V):
+            td_error = self._reward(game)
+            self.V[game.state] = td_error
+            self.__backup_td_error(td_error)
+
+    def learn_from_move(self, game):
+        current_state = game.state
+        best_next_move, selected_next_move = self.learn_select_move(game)
+        r = self._reward(game)
+
+        current_state_value = self.state_value(current_state)
+        best_move_value = self.state_value(best_next_move)
+        td_error = r + best_move_value - current_state_value
+        self.E[current_state] = self.E.get(current_state, 0.0) + 1.0
+        self.__backup_td_error(td_error)
+
+        if best_next_move != selected_next_move:
+            self.E = dict()
+
+        game.make_move(selected_next_move)
+
+    def __backup_td_error(self, td_error):
+        for state, eligibility in self.E.items():
+            self.V[state] = self.V.get(state, 0.0) + self.alpha * eligibility * td_error
+            self.E[state] = self.lam * eligibility
+
+    def learn_select_move(self, game):
+        allowed_state_values = self._state_values( game.allowed_moves() )
+        if game.player == self.value_player:
+            best_move = self._argmax_V(allowed_state_values)
+        else:
+            best_move = self._argmin_V(allowed_state_values)
+
+        selected_move = best_move
+        if random.random() < self.epsilon:
+            selected_move = self._random_V(allowed_state_values)
+
+        return (best_move, selected_move)
